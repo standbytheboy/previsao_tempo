@@ -1,4 +1,4 @@
-const API_KEY = "ef60a79c9c3ca99f2edfad01fd9badb3";
+const API_KEY = "307e2b29887ad37cbbbc745558cc4411";
 const BASE_URL = "https://api.openweathermap.org/data/2.5/";
 
 document.querySelector(".busca").addEventListener("submit", async (event) => {
