@@ -1,5 +1,6 @@
 const API_KEY = "307e2b29887ad37cbbbc745558cc4411";
 const BASE_URL = "https://api.openweathermap.org/data/2.5/";
+const GEO_URL = 'https://api.openweathermap.org/geo/1.0/direct';
 
 document.querySelector(".busca").addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -9,23 +10,33 @@ document.querySelector(".busca").addEventListener("submit", async (event) => {
     clearInfo();
     showWarning("Carregando...");
 
-    // Faz uma única chamada para a API de 5 dias / 3 horas
-    let url = `${BASE_URL}forecast?q=${encodeURI(
-      input
-    )}&appid=${API_KEY}&units=metric&lang=pt_br`;
+    // Busca as coordenadas e o estado usando a Geocoding API
+    let geoUrl = `${GEO_URL}?q=${encodeURI(input)}&limit=1&appid=${API_KEY}`;
+    let geoResults = await fetch(geoUrl);
+    let geoJson = await geoResults.json();
+
+    if (geoJson.length > 0) {
+        const { name, lat, lon, country, state } = geoJson[0];
+        let currentWeatherUrl = `${BASE_URL}weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=pt_br`;
+        let currentWeatherResults = await fetch(currentWeatherUrl);
+        let currentWeatherJson = await currentWeatherResults.json();
+        
+        showInfo({
+            name,
+            state, 
+            country,
+            temp: currentWeatherJson.main.temp,
+            tempIcon: currentWeatherJson.weather[0].icon,
+            windSpeed: currentWeatherJson.wind.speed,
+            descri: currentWeatherJson.weather[0].description,
+        });}
+
+    // chamada para a API de 5 dias / 3 horas
+    let url = `${BASE_URL}forecast?q=${encodeURI(input)}&appid=${API_KEY}&units=metric&lang=pt_br`;
     let results = await fetch(url);
     let json = await results.json();
 
     if (json.cod === "200") {
-      showInfo({
-        name: json.city.name,
-        country: json.city.country,
-        temp: json.list[0].main.temp,
-        tempIcon: json.list[0].weather[0].icon,
-        windSpeed: json.list[0].wind.speed,
-        descri: json.list[0].weather[0].description,
-      });
-
       // Processa os dados de 3 em 3 horas para mostrar um resumo diário
       const dailyForecast = processForecastData(json.list);
       showDailyForecast(dailyForecast);
@@ -43,7 +54,7 @@ function processForecastData(dataList) {
   const dailyData = {};
 
   dataList.forEach((item) => {
-    const date = new Date(item.dt * 1000); // Converte timestamp para data
+    const date = new Date(item.dt * 1000);
     const day = date.toISOString().split("T")[0]; // Extrai a data 'YYYY-MM-DD'
 
     if (!dailyData[day]) {
@@ -68,23 +79,17 @@ function processForecastData(dataList) {
 }
 
 function showInfo(data) {
-  showWarning("");
-  document.querySelector(".resultado").style.display = "block";
-  document.querySelector(".titulo").innerHTML = `${data.name}, ${data.country}`;
-  document.querySelector(".temperatura").innerHTML = `${data.temp.toFixed(
-    1
-  )} <sup>ºC</sup>`;
-  document.querySelector(".ventoInfo").innerHTML = `${data.windSpeed.toFixed(
-    1
-  )} <span>km/h</span>`;
-  document.querySelector(".tempInfo").innerHTML = `${data.descri}`;
-  document
-    .querySelector(".informacoes img")
-    .setAttribute(
-      "src",
-      `http://openweathermap.org/img/wn/${data.tempIcon}@2x.png`
-    );
-}
+            showWarning("");
+            document.querySelector(".resultado").style.display = "block";
+            
+            const locationText = data.state ? `${data.name}, ${data.state}, ${data.country}` : `${data.name}, ${data.country}`;
+            document.querySelector(".titulo").innerHTML = locationText;
+
+            document.querySelector(".temperatura").innerHTML = `${data.temp.toFixed(1)} <sup>ºC</sup>`;
+            document.querySelector(".ventoInfo").innerHTML = `${data.windSpeed.toFixed(1)} <span>km/h</span>`;
+            document.querySelector(".tempInfo").innerHTML = `${data.descri}`;
+            document.querySelector(".informacoes img").setAttribute("src", `http://openweathermap.org/img/wn/${data.tempIcon}@2x.png`);
+        }
 
 function showDailyForecast(forecastList) {
   const forecastContainer = document.getElementById("forecast-container");
