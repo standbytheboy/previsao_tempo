@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Previsão do Tempo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-4">
+
+    <div class="container rounded-xl shadow-2xl p-8 max-w-2xl w-full text-white text-center">
+        <h1 class="text-4xl font-bold mb-8 drop-shadow-lg">Previsão do Tempo</h1>
+
+        <form class="busca flex rounded-full bg-white bg-opacity-20 shadow-md mb-6 p-1">
+            <input 
+                type="search" 
+                id="searchInput" 
+                placeholder="Digite a cidade..." 
+                class="flex-1 bg-transparent text-white placeholder-white outline-none px-4 py-2"
+            />
+            <button 
+                type="submit" 
+                class="bg-white text-blue-600 rounded-full w-10 h-10 flex items-center justify-center shadow-lg transform transition-transform hover:scale-110"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+            </button>
+        </form>
+
+        <div class="aviso text-yellow-300 font-medium mb-4"></div>
+
+        <div class="resultado hidden mt-6">
+            <div class="titulo text-3xl font-semibold mb-4">--</div>
+            
+            <div class="informacoes flex flex-col md:flex-row items-center justify-center gap-4 mb-4">
+                <div class="temp-info flex items-center gap-2">
+                    <div class="temperatura text-6xl font-bold">--</div>
+                    <div class="tempInfo text-lg mt-2">--</div>
+                </div>
+                <div class="image-wrapper">
+                    <img src="" alt="Ícone do tempo" class="mx-auto my-auto">
+                </div>
+            </div>
+
+            <div class="vento-info flex items-center justify-center gap-2 text-xl font-medium mt-4">
+                <div>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                </div>
+                <div class="ventoInfo">--</div>
+            </div>
+        </div>
+
+        <div class="previsao-7-dias hidden mt-8 text-left">
+            <h2 class="text-2xl font-bold mb-4">Previsão para os Próximos 7 Dias</h2>
+            <div id="forecast-container" class="space-y-4">
+            </div>
+        </div>
+    </div>
+
+    <script>
+                const API_KEY = 'ef60a79c9c3ca99f2edfad01fd9badb3';
+        const BASE_URL = 'https://api.openweathermap.org/data/2.5/';
+
+        document.querySelector('.busca').addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            let input = document.querySelector('#searchInput').value;
+            if (input !== '') {
+                clearInfo();
+                showWarning('Carregando...');
+
+                // Faz uma única chamada para a API de 5 dias / 3 horas
+                let url = `${BASE_URL}forecast?q=${encodeURI(input)}&appid=${API_KEY}&units=metric&lang=pt_br`;
+                let results = await fetch(url);
+                let json = await results.json();
+
+                if (json.cod === '200') {
+                    showInfo({
+                        name: json.city.name,
+                        country: json.city.country,
+                        temp: json.list[0].main.temp,
+                        tempIcon: json.list[0].weather[0].icon,
+                        windSpeed: json.list[0].wind.speed,
+                        descri: json.list[0].weather[0].description,
+                    });
+
+                    // Processa os dados de 3 em 3 horas para mostrar um resumo diário
+                    const dailyForecast = processForecastData(json.list);
+                    showDailyForecast(dailyForecast);
+                } else {
+                    clearInfo();
+                    showWarning('Não encontramos essa localização');
+                }
+            } else {
+                clearInfo();
+            }
+        });
+
+        // Esta função agrupa os dados de 3 em 3 horas em um resumo diário
+        function processForecastData(dataList) {
+            const dailyData = {};
+
+            dataList.forEach(item => {
+                const date = new Date(item.dt * 1000); // Converte timestamp para data
+                const day = date.toISOString().split('T')[0]; // Extrai a data 'YYYY-MM-DD'
+
+                if (!dailyData[day]) {
+                    dailyData[day] = {
+                        temp_min: item.main.temp_min,
+                        temp_max: item.main.temp_max,
+                        icon: item.weather[0].icon,
+                    };
+                } else {
+                    dailyData[day].temp_min = Math.min(dailyData[day].temp_min, item.main.temp_min);
+                    dailyData[day].temp_max = Math.max(dailyData[day].temp_max, item.main.temp_max);
+                }
+            });
+
+            return Object.values(dailyData);
+        }
+
+        function showInfo(data) {
+            showWarning('');
+            document.querySelector('.resultado').style.display = 'block';
+            document.querySelector('.titulo').innerHTML = `${data.name}, ${data.country}`;
+            document.querySelector('.temperatura').innerHTML = `${data.temp.toFixed(1)} <sup>ºC</sup>`;
+            document.querySelector('.ventoInfo').innerHTML = `${data.windSpeed.toFixed(1)} <span>km/h</span>`;
+            document.querySelector('.tempInfo').innerHTML = `${data.descri}`;
+            document.querySelector('.informacoes img').setAttribute('src', `http://openweathermap.org/img/wn/${data.tempIcon}@2x.png`);
+        }
+
+        function showDailyForecast(forecastList) {
+            const forecastContainer = document.getElementById('forecast-container');
+            forecastContainer.innerHTML = '';
+            document.querySelector('.previsao-7-dias').style.display = 'block';
+
+            const daysOfWeek = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+            const today = new Date();
+
+            forecastList.forEach((dayData, index) => {
+                const date = new Date(today);
+                date.setDate(today.getDate() + index);
+
+                const dayName = index === 0 ? 'Hoje' : daysOfWeek[date.getDay()];
+                const dayTempMin = dayData.temp_min.toFixed(0);
+                const dayTempMax = dayData.temp_max.toFixed(0);
+                const dayIcon = dayData.icon;
+                
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'day-forecast';
+                dayDiv.innerHTML = `
+                    <div class="font-bold w-1/4">${dayName}</div>
+                    <img src="http://openweathermap.org/img/wn/${dayIcon}@2x.png" alt="Ícone do tempo" class="w-1/4">
+                    <div class="w-1/4 text-center">
+                        <span class="font-bold">${dayTempMax}º</span>
+                        <span class="opacity-70">${dayTempMin}º</span>
+                    </div>
+                `;
+                forecastContainer.appendChild(dayDiv);
+            });
+        }
+
+        function showWarning(msg) {
+            document.querySelector('.aviso').innerHTML = msg;
+        }
+
+        function clearInfo() {
+            showWarning('');
+            document.querySelector('.resultado').style.display = 'none';
+            document.querySelector('.previsao-7-dias').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
