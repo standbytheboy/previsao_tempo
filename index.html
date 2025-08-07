@@ -12,13 +12,16 @@
     <div class="container rounded-xl shadow-2xl p-4 md:p-8 max-w-2xl w-full text-white text-center">
       <h1 class="text-4xl font-bold mb-8 drop-shadow-lg">Previsão do Tempo</h1>
 
+      <div class="relative">
       <form class="busca flex rounded-full bg-white bg-opacity-20 shadow-md mb-6 p-1">
         <input type="search" id="searchInput" placeholder="Digite a cidade..." class="flex-1 w-10 bg-transparent text-white placeholder-white outline-none pl-4 py-2"/>
         <button type="submit" class="bg-white text-blue-600 rounded-full w-10 h-10 flex items-center justify-center shadow-lg transform transition-transform hover:scale-110">
           <i class="ai-search"></i>
         </button>
       </form>
-
+      <ul id="suggestionsList" class="autocomplete-list hidden"></ul>
+    </div>
+    
       <div class="aviso text-yellow-300 font-medium mb-4"></div>
 
       <div class="resultado hidden mt-6">

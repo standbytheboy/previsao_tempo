@@ -1,32 +1,61 @@
 body {
-            background: linear-gradient(to right, #6a11cb 0%, #2575fc 100%);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        .container {
-            backdrop-filter: blur(10px);
-            background: rgba(255, 255, 255, 0.2);
-        }
-        .resultado {
-            animation: fadeIn 1s ease-in-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .aviso {
-            min-height: 1.5rem;
-        }
-        .informacoes img, .day-forecast img {
-            max-width: 80px;
-            height: auto;
-        }
-        .day-forecast {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 10px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-        }
-        .day-forecast:last-child {
-            border-bottom: none;
-        }
+  background: linear-gradient(to right, #6a11cb 0%, #2575fc 100%);
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+.container {
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.2);
+}
+.resultado {
+  animation: fadeIn 1s ease-in-out;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.aviso {
+  min-height: 1.5rem;
+}
+.informacoes img,
+.day-forecast img {
+  max-width: 80px;
+  height: auto;
+}
+.day-forecast {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+}
+.day-forecast:last-child {
+  border-bottom: none;
+}
+
+.autocomplete-list {
+  list-style: none;
+  max-height: 200px;
+  overflow-y: auto;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 0.5rem;
+  margin-top: 0.5rem;
+  text-align: left;
+  position: absolute;
+  width: 100%;
+  z-index: 10;
+}
+.autocomplete-list li {
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  transition: background-color 0.2s;
+}
+.autocomplete-list li:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
